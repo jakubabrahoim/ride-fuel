@@ -1,15 +1,12 @@
 import { betterAuth } from 'better-auth'
-import { neon } from '@neondatabase/serverless'
+import { Pool } from 'pg'
 
-const sql = neon(process.env.DATABASE_URL!)
+const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 
 export const auth = betterAuth({
   database: {
     type: 'pg',
-    query: async (query: string, params?: unknown[]) => {
-      const rows = await sql(query, params as unknown[])
-      return { rows }
-    },
+    pool,
   },
   emailAndPassword: {
     enabled: true,

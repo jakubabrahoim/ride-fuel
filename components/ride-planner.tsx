@@ -356,7 +356,7 @@ export function RidePlanner({ initialPlan, onSaved }: PlannerProps) {
 
         {/* Stats row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <NumberField label="Duration" value={duration} onChange={setDuration} icon={<Clock className="w-3.5 h-3.5" />} unit="min" min={1} />
+          <NumberField label="Duration" value={duration} onChange={(v) => setDuration(v ?? 120)} icon={<Clock className="w-3.5 h-3.5" />} unit="min" min={1} />
           <NumberField label="Distance" value={distance} onChange={setDistance} icon={<Ruler className="w-3.5 h-3.5" />} unit="km" placeholder="—" />
           <NumberField label="Elevation" value={elevation} onChange={setElevation} icon={<Mountain className="w-3.5 h-3.5" />} unit="m" placeholder="—" />
           <NumberField label="Temperature" value={temperature} onChange={setTemperature} icon={<Thermometer className="w-3.5 h-3.5" />} unit="°C" placeholder="—" />
