@@ -105,29 +105,67 @@ function useLocalStorage<T>(key: string, initial: T) {
   return [value, set, hydrated] as const
 }
 
-// ─── Ride Plans (localStorage) ────────────────────────────────────────────────
+// ─── Ride Plans (Neon DB via API) ────────────────────────────────────────────
+
+const PLANS_KEY = '/api/plans'
+
+function mapPlanRow(row: Record<string, unknown>): RidePlan {
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    date: (row.date as string | null) ?? undefined,
+    area: (row.area as string | null) ?? undefined,
+    duration: Number(row.duration),
+    distance: row.distance != null ? Number(row.distance) : undefined,
+    elevation: row.elevation != null ? Number(row.elevation) : undefined,
+    intensity: row.intensity as RidePlan['intensity'],
+    temperature: row.temperature != null ? Number(row.temperature) : undefined,
+    weather: (row.weather as RidePlan['weather']) ?? undefined,
+    foods: (row.foods as RideFoodEntry[]) ?? [],
+    notes: (row.notes as string | null) ?? undefined,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  }
+}
 
 export function useRidePlans() {
-  const [plans, setPlans, hydrated] = useLocalStorage<RidePlan[]>('ridefuel-plans', [])
+  const { data: raw = [], isLoading, error, mutate } = useSWR<Record<string, unknown>[]>(PLANS_KEY, fetcher)
+  const plans: RidePlan[] = raw.map(mapPlanRow)
+  const hydrated = !isLoading
 
-  const addPlan = (plan: Omit<RidePlan, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const now = new Date().toISOString()
-    const item: RidePlan = { ...plan, id: `plan-${Date.now()}`, createdAt: now, updatedAt: now }
-    setPlans((prev) => [item, ...prev])
-    return item
+  const addPlan = async (plan: Omit<RidePlan, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const res = await fetch(PLANS_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(plan),
+    })
+    if (!res.ok) throw new Error('Failed to save plan')
+    const created = mapPlanRow(await res.json())
+    await mutate((prev = []) => [created as unknown as Record<string, unknown>, ...prev], false)
+    return created
   }
 
-  const updatePlan = (id: string, updates: Partial<RidePlan>) => {
-    setPlans((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p,
-      ),
+  const updatePlan = async (id: string, updates: Partial<RidePlan>) => {
+    const res = await fetch(`${PLANS_KEY}/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    })
+    if (!res.ok) throw new Error('Failed to update plan')
+    const updated = mapPlanRow(await res.json())
+    await mutate(
+      (prev = []) => prev.map((p) => (p.id === id ? updated as unknown as Record<string, unknown> : p)),
+      false,
     )
+    return updated
   }
 
-  const deletePlan = (id: string) => setPlans((prev) => prev.filter((p) => p.id !== id))
+  const deletePlan = async (id: string) => {
+    await fetch(`${PLANS_KEY}/${id}`, { method: 'DELETE' })
+    await mutate((prev = []) => prev.filter((p) => p.id !== id), false)
+  }
 
-  return { plans, hydrated, addPlan, updatePlan, deletePlan }
+  return { plans, hydrated, isLoading, error, addPlan, updatePlan, deletePlan }
 }
 
 // ─── Ride Templates (localStorage) ───────────────────────────────────────────
