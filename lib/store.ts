@@ -6,7 +6,8 @@ import type { FoodItem, RidePlan, RideTemplate, RideFoodEntry } from './types'
 
 // ─── SWR fetcher ─────────────────────────────────────────────────────────────
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json())
+const fetcher = (url: string) =>
+  fetch(url).then((r) => r.json()).then((data) => (Array.isArray(data) ? data : []))
 
 const FOODS_KEY = '/api/foods'
 

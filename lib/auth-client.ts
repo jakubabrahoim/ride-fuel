@@ -1,6 +1,6 @@
 'use client'
 
-import { createAuthClient } from 'better-auth/react'
+import { createAuthClient } from 'better-auth/client'
 
 export const authClient = createAuthClient({
   baseURL: typeof window !== 'undefined'
