@@ -2,11 +2,14 @@
 
 import { type AppView } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { signOut } from '@/lib/auth-client'
+import { useRouter } from 'next/navigation'
 import {
   UtensilsCrossed,
   LayoutDashboard,
   Bike,
   Copy,
+  LogOut,
 } from 'lucide-react'
 
 interface NavItem {
@@ -29,6 +32,13 @@ interface AppShellProps {
 }
 
 export function AppShell({ view, onNavigate, children }: AppShellProps) {
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/login')
+  }
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       {/* Top bar */}
@@ -64,6 +74,14 @@ export function AppShell({ view, onNavigate, children }: AppShellProps) {
               </button>
             )
           })}
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors ml-1"
+            title="Sign out"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
         </nav>
       </header>
 
